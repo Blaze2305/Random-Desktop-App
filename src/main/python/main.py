@@ -1,16 +1,56 @@
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from PyQt5 import QtWidgets
-from requests import get
+from PyQt5 import QtWidgets,QtGui,QtCore
+from requests import post,get
 import Design
 import sys
+from os import environ
 from random import choice
+
+
+DEEP_AI_API_KEY = environ['DEEP_AI_API_KEY']
 
 class RandomFetching(QtWidgets.QMainWindow,Design.Ui_MainWindow):
 	def __init__(self,parent=None):
 		super(RandomFetching,self).__init__()
 		self.setupUi(self)
 		self.InsultMeButton.clicked.connect(self.fetchInsult)
+		self.ImageSearchButton.clicked.connect(self.fetchImage)
+		self.InsultTextBox.setFont(QtGui.QFont("Roboto",25))
+		self.label_3.setOpenExternalLinks(True)
+		self.label_2.setOpenExternalLinks(True)
 		self.preloadInsults()
+
+
+	def fetchImage(self):
+		seedText = self.ImageSearchBox.toPlainText()
+		if not seedText:
+			self.AlertError("Seed Text is empty")
+			return
+
+		data = post(
+			"https://api.deepai.org/api/text2img",
+			data={
+				'text': seedText,
+			},
+			headers={'api-key': DEEP_AI_API_KEY}
+		)
+		print(data.status_code)
+		if data.status_code == 200:
+			data = data.json()
+		else:
+			self.AlertError("Unable to fetch the generated image")
+			return
+		
+		url = data['output_url']
+
+		imageData = get(url).content
+
+		image = QtGui.QImage()
+		image.loadFromData(imageData)
+
+		pixelImage = QtGui.QPixmap(image)
+		self.ImageView.setPixmap(pixelImage)
+
 
 	def fetchInsult(self):
 		self.InsultTextBox.clear()
@@ -44,6 +84,11 @@ class RandomFetching(QtWidgets.QMainWindow,Design.Ui_MainWindow):
 				insultsList = insultsFile.read().split("\n")
 				insults[file] = insultsList
 		self.insults = insults
+
+	def AlertError(self,message):
+		alertBox = QtWidgets.QMessageBox()
+		alertBox.setText(message)
+		alertBox.exec_()
 
 
 if __name__ == '__main__':
