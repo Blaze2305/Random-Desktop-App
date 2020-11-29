@@ -20,7 +20,7 @@ class RandomFetching(QtWidgets.QMainWindow,Design.Ui_MainWindow):
 			insult = choice(self.insults[category])
 			self.InsultTextBox.append(insult)
 		else:
-			self.InsultTextBox.apped("NO INSULT TYPE SELECTED")
+			self.InsultTextBox.append("NO INSULT TYPE SELECTED")
 
 	def getCheckedRadioButton(self):
 		if self.ShakespeareButton.isChecked():
